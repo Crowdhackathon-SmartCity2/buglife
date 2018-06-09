@@ -1,12 +1,19 @@
 package com.maliotis.traffic;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -14,10 +21,18 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.List;
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private final int MY_PERMISSIONS_REQUEST_GPS = 0;
+    private LocationManager locationManager;
+    private LocationListener locationListener;
+    private Location mLocation;
+    protected GoogleApiClient mGoogleApiClient;
+    private double mLatitude = 0;
+    private double mLongitude = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,12 +64,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         MY_PERMISSIONS_REQUEST_GPS);
 
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
             }
         } else {
             // Permission has already been granted
+            if (isGPSEnabled()){
+                GPS();
+            }
         }
     }
 
@@ -68,6 +83,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
+                   if(isGPSEnabled()){
+                       GPS();
+                   }
                 } else {
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
@@ -80,14 +98,77 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    private void GPS() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.d("MYTAG", "Something went wrong");
+
+        } else {
+            //mLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            mLocation = getLastLocation();
+            if(mLocation == null){
+                Log.v("Location","Location was null");
+            }
+            else {
+                mLatitude = mLocation.getLatitude();
+                mLongitude = mLocation.getLongitude();
+            }
+        }
+    }
+
+    private Location getLastLocation(){
+        Location bLocation = null;
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.d("MYTAG", "Something went wrong");
+
+        } else {
+            List<String> providers = locationManager.getProviders(true);
+            for (String provider : providers) {
+                Location l = locationManager.getLastKnownLocation(provider);
+                if (l == null) {
+                    continue;
+                }
+                if(bLocation == null || l.getAccuracy() < bLocation.getAccuracy()){
+                    bLocation = l;
+                }
+            }
+
+        }
+
+        return bLocation;
+    }
+
+    public boolean isGPSEnabled(){
+        boolean tf;
+        boolean ft;
+        boolean ret = true;
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        tf = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        ft = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        String locationProviders = Settings.Secure.getString(getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+        if(!tf && !ft && (locationProviders == null || locationProviders.equals(""))){
+            ret = false;
+        }
+
+        return ret;
+
+    }
+
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        while (mLatitude == 0 && mLongitude==0) {
+
+        }
+        LatLng usersLocation = new LatLng(mLatitude, mLongitude);
+        mMap.addMarker(new MarkerOptions().position(usersLocation).title("Marker in usersLocation"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(usersLocation));
+
     }
+
+
 }
