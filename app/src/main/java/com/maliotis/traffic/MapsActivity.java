@@ -33,6 +33,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected GoogleApiClient mGoogleApiClient;
     private double mLatitude = 37.9908164;
     private double mLongitude = 23.6682991;
+    private boolean granted = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,8 +68,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         } else {
             // Permission has already been granted
-            if (isGPSEnabled()){
+            if (isGPSEnabled()) {
                 GPS();
+                granted = true;
             }
         }
     }
@@ -83,9 +85,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
-                   if(isGPSEnabled()){
-                       GPS();
-                   }
+                    if (isGPSEnabled()) {
+                        GPS();
+                        granted = true;
+                    }
                 } else {
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
@@ -106,17 +109,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } else {
             //mLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
             mLocation = getLastLocation();
-            if(mLocation == null){
-                Log.v("Location","Location was null");
-            }
-            else {
+            if (mLocation == null) {
+                Log.v("Location", "Location was null");
+            } else {
                 mLatitude = mLocation.getLatitude();
                 mLongitude = mLocation.getLongitude();
             }
         }
     }
 
-    private Location getLastLocation(){
+    private Location getLastLocation() {
         Location bLocation = null;
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -129,7 +131,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (l == null) {
                     continue;
                 }
-                if(bLocation == null || l.getAccuracy() < bLocation.getAccuracy()){
+                if (bLocation == null || l.getAccuracy() < bLocation.getAccuracy()) {
                     bLocation = l;
                 }
             }
@@ -139,7 +141,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return bLocation;
     }
 
-    public boolean isGPSEnabled(){
+    public boolean isGPSEnabled() {
         boolean tf;
         boolean ft;
         boolean ret = true;
@@ -147,7 +149,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         tf = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         ft = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
         String locationProviders = Settings.Secure.getString(getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
-        if(!tf && !ft && (locationProviders == null || locationProviders.equals(""))){
+        if (!tf && !ft && (locationProviders == null || locationProviders.equals(""))) {
             ret = false;
         }
 
@@ -161,10 +163,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        new Thread(new Runnable() {
+        Thread thread = new Thread(new Runnable() {
             public void run() {
+                if (isGPSEnabled() && granted) {
+                    GPS();
+                }
             }
-        }).start();
+        });
+        thread.start();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         LatLng usersLocation = new LatLng(mLatitude, mLongitude);
         mMap.addMarker(new MarkerOptions().position(usersLocation).title("Marker in usersLocation"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(usersLocation));
