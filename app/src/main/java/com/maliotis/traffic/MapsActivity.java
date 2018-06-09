@@ -31,8 +31,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationListener locationListener;
     private Location mLocation;
     protected GoogleApiClient mGoogleApiClient;
-    private double mLatitude = 0;
-    private double mLongitude = 0;
+    private double mLatitude = 37.9908164;
+    private double mLongitude = 23.6682991;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -161,9 +161,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        while (mLatitude == 0 && mLongitude==0) {
-
-        }
+        new Thread(new Runnable() {
+            public void run() {
+            }
+        }).start();
         LatLng usersLocation = new LatLng(mLatitude, mLongitude);
         mMap.addMarker(new MarkerOptions().position(usersLocation).title("Marker in usersLocation"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(usersLocation));
