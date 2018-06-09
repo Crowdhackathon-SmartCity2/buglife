@@ -20,6 +20,12 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.CustomCap;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.JointType;
+import com.google.android.gms.maps.model.RoundCap;
 
 import java.util.List;
 
@@ -176,6 +182,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        /////////////////TESTING////////////////////////////////////////////
+        // Add polylines and polygons to the map. This section shows just
+        // a single polyline. Read the rest of the tutorial to learn more.
+        Polyline polyline1 = mMap.addPolyline(new PolylineOptions()
+                .clickable(true)
+                .add(
+                        new LatLng(37.316, 23.421),
+                        new LatLng(37.947, 23.692),
+                        new LatLng(37.464, 23.991),
+                        new LatLng(37.601, 23.417),
+                        new LatLng(37.406, 23.448),
+                        new LatLng(37.591, 23.409)));
+        polyline1.setEndCap(new RoundCap());
+        polyline1.setWidth(5);
+        polyline1.setColor(0xff000000);
+        polyline1.setJointType(JointType.ROUND);
+        ////////////////////////////////////////////////////////////////////
+
         LatLng usersLocation = new LatLng(mLatitude, mLongitude);
         mMap.addMarker(new MarkerOptions().position(usersLocation).title("Marker in usersLocation"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(usersLocation));
