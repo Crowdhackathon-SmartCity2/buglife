@@ -1,6 +1,7 @@
 package com.maliotis.traffic;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -22,18 +23,19 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private final int MY_PERMISSIONS_REQUEST_GPS = 0;
     private LocationManager locationManager;
-    private LocationListener locationListener;
-    private Location mLocation;
-    protected GoogleApiClient mGoogleApiClient;
     private double mLatitude = 37.9908164;
     private double mLongitude = 23.6682991;
     private boolean granted = false;
+    Timer timer;
+    TimerTask timerTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +49,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         requestPermission();
     }
 
+    /**
+     * Tries to request permission if its not granted by the user
+     * otherwise continues to execute the dependant code from the permissions
+     *
+     * @author #petrosmaliotis
+     */
     private void requestPermission() {
         if (ContextCompat.checkSelfPermission(MapsActivity.this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
@@ -75,6 +83,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    /**
+     * Checks the users response to the Permission requested
+     * It loops through the permissions we currently want to be granted
+     *
+     * @param requestCode The requested code for its permission
+     * @param permissions The array of permissions we are asking
+     * @param grantResults The array of results to the requested permissions
+     * @author #petrosmaliotis
+     */
+    @SuppressLint("MissingPermission")
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
@@ -108,16 +126,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         } else {
             //mLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-            mLocation = getLastLocation();
-            if (mLocation == null) {
+            Location location = getLastLocation();
+            if (location == null) {
                 Log.v("Location", "Location was null");
             } else {
-                mLatitude = mLocation.getLatitude();
-                mLongitude = mLocation.getLongitude();
+                mLatitude = location.getLatitude();
+                mLongitude = location.getLongitude();
             }
         }
     }
 
+    /**
+     * Gets the last known location prioritizing with the better provider (Wifi) (Data) (Gps)
+     *
+     * @author #petrosmaliotis
+     * @return location object
+     */
     private Location getLastLocation() {
         Location bLocation = null;
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
@@ -141,6 +165,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return bLocation;
     }
 
+
+    /**
+     * Checks for Network or Gps provider
+     * @return whether gps is enabled or not
+     * @author #petrosmaliotis
+     */
     public boolean isGPSEnabled() {
         boolean tf;
         boolean ft;
@@ -158,29 +188,69 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
+    /**
+     * When map is read to load this function will be called
+     * and will update the user's location every 2 sec  with start()
+     * @see #start()
+     * @param googleMap GoogleMap object
+     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
-        Thread thread = new Thread(new Runnable() {
+        timerTask = new TimerTask() {
+            @Override
             public void run() {
                 if (isGPSEnabled() && granted) {
                     GPS();
+                    //Runs on the main thread where gui happens!!!!(Don't run GUI on back threads)
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            //ChangeMarkerOnMap() changes the GUI !!!
+                            changeMarkerOnMap();
+                            //Yay!! Works P.M !
+                            Log.d("Change on map","Works :)");
+                        }
+                    });
                 }
             }
-        });
-        thread.start();
-        try {
-            thread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        LatLng usersLocation = new LatLng(mLatitude, mLongitude);
-        mMap.addMarker(new MarkerOptions().position(usersLocation).title("Marker in usersLocation"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(usersLocation));
+        };
 
+        start();
     }
 
+    public void start() {
+        if(timer == null) {
+            timer = new Timer();
+            timer.scheduleAtFixedRate(timerTask,2000,1000);
+        }
+    }
+
+    /**
+     * Will be called when the user arrives to his destination!
+     * To stop the update of his location!
+     * @author #petrosmaliotis
+     */
+    public void stop() {
+        timer.cancel();
+        timer = null;
+    }
+
+    /**
+     * Changes the pin on the map!
+     * Takes NO parameters the values needed are global !
+     * @see #mLatitude
+     * @see #mLongitude
+     * @author #petrosmaliotis
+     */
+    private void changeMarkerOnMap() {
+        LatLng usersLocation = new LatLng(mLatitude, mLongitude);
+        //Its a good practice to not over extend you code over that (white) line ->
+        //So we 'break' our code to make it more readable!
+        mMap.addMarker(new MarkerOptions().position(usersLocation)
+                .title("Marker in usersLocation"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(usersLocation));
+    }
 
 }
