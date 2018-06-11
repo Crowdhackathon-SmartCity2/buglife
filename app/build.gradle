@@ -1,14 +1,6 @@
 apply plugin: 'com.android.application'
 
 android {
-    signingConfigs {
-        config {
-            keyAlias 'TrafficKey'
-            keyPassword 'e9lof314nw'
-            storeFile file('/Users/petrosmaliotis/keystore')
-            storePassword 'e9lof314nw'
-        }
-    }
     compileSdkVersion 27
     defaultConfig {
         applicationId "com.maliotis.traffic"
@@ -23,9 +15,7 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
-        debug {
-            signingConfig signingConfigs.config
-        }
+
     }
 }
 
