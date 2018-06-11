@@ -40,11 +40,13 @@ import java.util.TimerTask;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    EditText locationSearch;
     private final int MY_PERMISSIONS_REQUEST_GPS = 0;
     private LocationManager locationManager;
     private double mLatitude = 37.9908164;
     private double mLongitude = 23.6682991;
     private boolean granted = false;
+    private boolean first = false;
     Timer timer;
     TimerTask timerTask;
 
@@ -56,6 +58,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        locationSearch = findViewById(R.id.editText);
 
         requestPermission();
     }
@@ -198,26 +201,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    // search bar code
+    /**
+     * Searches for the location from the EditText field !
+     * with geocoder gets the address from the name of the location.
+     * The address contains tha latlong values we want.
+     *
+     * @param view specifies the view (we implement it its this).
+     * @author #petrosmaliotis
+     */
     public void onMapSearch(View view) {
-        EditText locationSearch = (EditText) findViewById(R.id.editText);
+
         String location = locationSearch.getText().toString();
         List<Address>addressList = null;
 
-        if (location != null || !location.equals("")) {
+        if (!location.equals("")) {
             Geocoder geocoder = new Geocoder(this);
             try {
                 addressList = geocoder.getFromLocationName(location, 1);
+                Address address = addressList.get(0);
+                LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+                mMap.addMarker(new MarkerOptions().position(latLng).title("Marker"));
+                // make the camera go to the searched place
+                mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
 
             } catch (IOException e) {
                 // TODO: Here we need to handle the exception when the search doesn't exist
+                //TODO: P.M Show a fragment UI explaining the user what went wrong
                 e.printStackTrace();
             }
-            Address address = addressList.get(0);
-            LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
-            mMap.addMarker(new MarkerOptions().position(latLng).title("Marker"));
-            // make the camera go to the searched place
-            mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+
         }
     }
 
@@ -282,9 +294,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng usersLocation = new LatLng(mLatitude, mLongitude);
         //Its a good practice to not over extend you code over that (white) line ->
         //So we 'break' our code to make it more readable!
+
         mMap.addMarker(new MarkerOptions().position(usersLocation)
                 .title("Marker in usersLocation"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(usersLocation));
+        if (!first) {
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(usersLocation));
+        }
+        first = true;
     }
 
 }
