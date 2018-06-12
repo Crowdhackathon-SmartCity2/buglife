@@ -42,13 +42,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     EditText locationSearch;
     private final int MY_PERMISSIONS_REQUEST_GPS = 0;
-    private LocationManager locationManager;
-    private double mLatitude = 37.9908164;
-    private double mLongitude = 23.6682991;
+    Location locationForGps;
     private boolean granted = false;
     private boolean first = false;
     Timer timer;
     TimerTask timerTask;
+    Gps gps;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +58,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         locationSearch = findViewById(R.id.editText);
-
+        gps = new Gps(this);
         requestPermission();
     }
 
@@ -90,8 +89,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         } else {
             // Permission has already been granted
-            if (isGPSEnabled()) {
-                GPS();
+            if (gps.isGPSEnabled()) {
+                try {
+                    locationForGps = gps.GPS();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 granted = true;
             }
         }
@@ -117,8 +120,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
-                    if (isGPSEnabled()) {
-                        GPS();
+                    if (gps.isGPSEnabled()) {
+                        try {
+                            locationForGps = gps.GPS();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                         granted = true;
                     }
                 } else {
@@ -131,74 +138,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // other 'case' lines to check for other
             // permissions this app might request.
         }
-    }
-
-    private void GPS() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Log.d("MYTAG", "Something went wrong");
-
-        } else {
-            //mLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-            Location location = getLastLocation();
-            if (location == null) {
-                Log.v("Location", "Location was null");
-            } else {
-                mLatitude = location.getLatitude();
-                mLongitude = location.getLongitude();
-            }
-        }
-    }
-
-    /**
-     * Gets the last known location prioritizing with the better provider (Wifi) (Data) (Gps)
-     *
-     * @author #petrosmaliotis
-     * @return location object
-     */
-    private Location getLastLocation() {
-        Location bLocation = null;
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Log.d("MYTAG", "Something went wrong");
-
-        } else {
-            List<String> providers = locationManager.getProviders(true);
-            for (String provider : providers) {
-                Location l = locationManager.getLastKnownLocation(provider);
-                if (l == null) {
-                    continue;
-                }
-                if (bLocation == null || l.getAccuracy() < bLocation.getAccuracy()) {
-                    bLocation = l;
-                }
-            }
-
-        }
-
-        return bLocation;
-    }
-
-
-    /**
-     * Checks for Network or Gps provider
-     * @return whether gps is enabled or not
-     * @author #petrosmaliotis
-     */
-    public boolean isGPSEnabled() {
-        boolean tf;
-        boolean ft;
-        boolean ret = true;
-        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        tf = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        ft = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-        String locationProviders = Settings.Secure.getString(getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
-        if (!tf && !ft && (locationProviders == null || locationProviders.equals(""))) {
-            ret = false;
-        }
-
-        return ret;
-
     }
 
     /**
@@ -247,8 +186,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         timerTask = new TimerTask() {
             @Override
             public void run() {
-                if (isGPSEnabled() && granted) {
-                    GPS();
+                if (gps.isGPSEnabled() && granted) {
+                    try {
+                       locationForGps = gps.GPS();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                     //Runs on the main thread where gui happens!!!!(Don't run GUI on back threads)
                     runOnUiThread(new Runnable() {
                         @Override
@@ -286,12 +229,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     /**
      * Changes the pin on the map!
      * Takes NO parameters the values needed are global !
-     * @see #mLatitude
-     * @see #mLongitude
+     *
      * @author #petrosmaliotis
      */
     private void changeMarkerOnMap() {
-        LatLng usersLocation = new LatLng(mLatitude, mLongitude);
+        LatLng usersLocation = new LatLng(locationForGps.getLatitude(),locationForGps.getLongitude());
         //Its a good practice to not over extend you code over that (white) line ->
         //So we 'break' our code to make it more readable!
 
