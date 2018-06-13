@@ -2,35 +2,26 @@ package com.maliotis.traffic;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.location.Address;
 import android.location.Geocoder;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.maps.model.CustomCap;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.JointType;
-import com.google.android.gms.maps.model.RoundCap;
+
 
 import java.io.IOException;
 import java.util.List;
@@ -48,11 +39,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Timer timer;
     TimerTask timerTask;
     Gps gps;
+    Toolbar mToolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+        mToolbar = findViewById(R.id.my_toolbar);
+        mToolbar.inflateMenu(R.menu.toolbar_menu);
+        mToolbar.setLogo(R.drawable.ic_directions_car_black_24dp);
+
+        mToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                return true;
+            }
+        });
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -61,6 +65,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         gps = new Gps(this);
         requestPermission();
     }
+
+
 
     /**
      * Tries to request permission if its not granted by the user
