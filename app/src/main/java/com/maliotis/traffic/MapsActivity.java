@@ -123,7 +123,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     {
         mLastLocation = location;
         if (mCurrLocationMarker != null) {
-            mCurrLocationMarker.remove();
+           mCurrLocationMarker.remove();
+           zoom = mMap.getCameraPosition().zoom;
         }
 
         //Place current location marker
@@ -132,10 +133,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         markerOptions.position(latLng);
         markerOptions.title("Current Position");
         //markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
-        //mCurrLocationMarker = mMap.addMarker(markerOptions);
+        mCurrLocationMarker = mMap.addMarker(markerOptions);
 
         //move map camera
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,16));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,zoom));
 
     }
 
