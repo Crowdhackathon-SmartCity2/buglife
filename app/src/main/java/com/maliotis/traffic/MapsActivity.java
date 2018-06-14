@@ -2,12 +2,21 @@ package com.maliotis.traffic;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.location.LocationListener;
+import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.location.Address;
@@ -15,56 +24,121 @@ import android.location.Geocoder;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Toast;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        com.google.android.gms.location.LocationListener {
 
     private GoogleMap mMap;
+    LocationRequest mLocationRequest;
+    GoogleApiClient mGoogleApiClient;
+    Location mLastLocation;
+    Marker mCurrLocationMarker;
     EditText locationSearch;
     private final int MY_PERMISSIONS_REQUEST_GPS = 0;
     Location locationForGps;
-    private boolean granted = false;
-    private boolean first = false;
-    Timer timer;
-    TimerTask timerTask;
     Gps gps;
-    Toolbar mToolbar;
+    float zoom = 16.0f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
-        mToolbar = findViewById(R.id.my_toolbar);
-        mToolbar.inflateMenu(R.menu.toolbar_menu);
-        mToolbar.setLogo(R.drawable.ic_directions_car_black_24dp);
-
-        mToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                return true;
-            }
-        });
-
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         locationSearch = findViewById(R.id.editText);
-        gps = new Gps(this);
         requestPermission();
     }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        //stop location updates when Activity is no longer active
+        if (mGoogleApiClient != null) {
+            FusedLocationProviderClient client = new FusedLocationProviderClient(this);
+            //client.removeLocationUpdates();
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, (com.google.android.gms.location.LocationListener) this);
+        }
+    }
+
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(1000);
+        mLocationRequest.setFastestInterval(1000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest,this);
+        }
+    }
+
+
+
+    @Override
+    public void onConnectionSuspended(int i) {}
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {}
+
+    @Override
+    public void onLocationChanged(Location location)
+    {
+        mLastLocation = location;
+        if (mCurrLocationMarker != null) {
+            mCurrLocationMarker.remove();
+        }
+
+        //Place current location marker
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(latLng);
+        markerOptions.title("Current Position");
+        //markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+        //mCurrLocationMarker = mMap.addMarker(markerOptions);
+
+        //move map camera
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,16));
+
+    }
+
 
 
 
@@ -101,7 +175,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                granted = true;
             }
         }
     }
@@ -132,7 +205,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-                        granted = true;
                     }
                 } else {
                     // permission denied, boo! Disable the
@@ -140,7 +212,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 return;
             }
-
             // other 'case' lines to check for other
             // permissions this app might request.
         }
@@ -167,7 +238,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
                 mMap.addMarker(new MarkerOptions().position(latLng).title("Marker"));
                 // make the camera go to the searched place
-                mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,zoom),1000,null);
+
 
             } catch (IOException e) {
                 // TODO: Here we need to handle the exception when the search doesn't exist
@@ -182,73 +255,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     /**
      * When map is read to load this function will be called
      * and will update the user's location every 2 sec  with start()
-     * @see #start()
      * @param googleMap GoogleMap object
      */
+    @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-        timerTask = new TimerTask() {
-            @Override
-            public void run() {
-                if (gps.isGPSEnabled() && granted) {
-                    try {
-                       locationForGps = gps.GPS();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    //Runs on the main thread where gui happens!!!!(Don't run GUI on back threads)
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            //ChangeMarkerOnMap() changes the GUI !!!
-                            changeMarkerOnMap();
-                            //Yay!! Works P.M !
-                            Log.d("Change on map","Works :)");
-                        }
-                    });
-                }
-            }
-        };
-
-        start();
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.setMyLocationEnabled(true);
+        buildGoogleApiClient();
+        mMap.setMyLocationEnabled(true);
     }
 
-    public void start() {
-        if(timer == null) {
-            timer = new Timer();
-            timer.scheduleAtFixedRate(timerTask,2000,1000);
-        }
-    }
 
-    /**
-     * Will be called when the user arrives to his destination!
-     * To stop the update of his location!
-     * @author #petrosmaliotis
-     */
-    public void stop() {
-        timer.cancel();
-        timer = null;
-    }
 
-    /**
-     * Changes the pin on the map!
-     * Takes NO parameters the values needed are global !
-     *
-     * @author #petrosmaliotis
-     */
-    private void changeMarkerOnMap() {
-        LatLng usersLocation = new LatLng(locationForGps.getLatitude(),locationForGps.getLongitude());
-        //Its a good practice to not over extend you code over that (white) line ->
-        //So we 'break' our code to make it more readable!
+    public static Bitmap getBitmapFromVectorDrawable(Context context, int drawableId) {
+        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
+        drawable = (DrawableCompat.wrap(drawable)).mutate();
 
-        mMap.addMarker(new MarkerOptions().position(usersLocation)
-                .title("Marker in usersLocation"));
-        if (!first) {
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(usersLocation));
-        }
-        first = true;
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        return bitmap;
     }
 
 }
