@@ -57,6 +57,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
     Marker mCurrLocationMarker;
+    DirectionsHandler mHandler;
     EditText locationSearch;
     private final int MY_PERMISSIONS_REQUEST_GPS = 0;
     Location locationForGps;
@@ -237,6 +238,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 addressList = geocoder.getFromLocationName(location, 1);
                 Address address = addressList.get(0);
                 LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+                urlFetch url = new urlFetch(this);
+                mHandler = url.getDirections(mLastLocation.getLatitude(),
+                        mLastLocation.getLongitude()
+                        ,address.getLatitude()
+                        ,address.getLongitude());
+
                 mMap.addMarker(new MarkerOptions().position(latLng).title("Marker"));
                 // make the camera go to the searched place
 
