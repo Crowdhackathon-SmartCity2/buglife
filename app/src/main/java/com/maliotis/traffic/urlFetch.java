@@ -25,7 +25,7 @@ public class urlFetch {
     public DirectionsHandler getDirections(double lat,double lon, double latDest, double lonDest) throws IOException{
         String key = mContext.getResources().getString(R.string.google_maps_key);
         String urlDestination = "https://maps.googleapis.com/maps/api/directions/json?origin= "
-                + lat + "," + lon + "destination= " + latDest + "," + lonDest + "&key="+key;
+                + lat + "," + lon + "&destination= " + latDest + "," + lonDest + "&key="+key;
         Request request = new Request.Builder().url(urlDestination).build();
 
         OkHttpClient client = new OkHttpClient();
