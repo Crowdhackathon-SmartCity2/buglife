@@ -126,7 +126,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (mCurrLocationMarker != null) {
            mCurrLocationMarker.remove();
            //if driving mode true then
-           //zoom = mMap.getCameraPosition().zoom;
+           zoom = mMap.getCameraPosition().zoom;
         }
 
         //Place current location marker

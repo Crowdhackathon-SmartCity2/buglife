@@ -26,6 +26,7 @@ public class urlFetch {
         String key = mContext.getResources().getString(R.string.google_maps_key);
         String urlDestination = "https://maps.googleapis.com/maps/api/directions/json?origin= "
                 + lat + "," + lon + "&destination= " + latDest + "," + lonDest + "&key="+key;
+        
         Request request = new Request.Builder().url(urlDestination).build();
 
         OkHttpClient client = new OkHttpClient();
