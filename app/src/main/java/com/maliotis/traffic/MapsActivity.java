@@ -170,12 +170,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         } else {
             // Permission has already been granted
-            if (gps.isGPSEnabled()) {
-                try {
+            try {
+                if (gps.isGPSEnabled()) {
                     locationForGps = gps.GPS();
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -265,7 +265,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.setMyLocationEnabled(true);
         buildGoogleApiClient();
-        mMap.setMyLocationEnabled(true);
+        mMap.setTrafficEnabled(true);
     }
 
 
