@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
@@ -38,11 +39,16 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.JointType;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -63,6 +69,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Location locationForGps;
     Gps gps;
     float zoom = 16.0f;
+    private List<List<HashMap<String, String>>> routes = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -244,6 +251,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         mLastLocation.getLongitude()
                         ,address.getLatitude()
                         ,address.getLongitude());
+                routes = url.getRoutes();
 
                 mMap.addMarker(new MarkerOptions().position(latLng).title("Marker"));
                 // make the camera go to the searched place
@@ -276,6 +284,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setTrafficEnabled(true);
     }
 
+
+    public void drawRoute(List<List<HashMap<String, String>>> routes){
+        ArrayList points = null;
+        PolylineOptions lineOptions = null;
+        MarkerOptions markerOptions = new MarkerOptions();
+
+        for (int i = 0; i < routes.size(); i++) {
+            points = new ArrayList();
+            lineOptions = new PolylineOptions();
+
+            List<HashMap<String, String>> path = routes.get(i);
+
+            for (int j = 0; j < path.size(); j++) {
+                HashMap<String, String> point = path.get(j);
+
+                double lat = Double.parseDouble(point.get("lat"));
+                double lng = Double.parseDouble(point.get("lng"));
+                LatLng position = new LatLng(lat, lng);
+
+                points.add(position);
+            }
+
+            lineOptions.addAll(points);
+            lineOptions.width(12);
+            lineOptions.color(Color.RED);
+            lineOptions.geodesic(true);
+
+        }
+        mMap.addPolyline(lineOptions);
+    }
 
 
     public static Bitmap getBitmapFromVectorDrawable(Context context, int drawableId) {
