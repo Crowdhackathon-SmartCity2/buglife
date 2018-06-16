@@ -35,7 +35,7 @@ public class urlFetch {
     }
 
 
-    public void getDirections(double lat,double lon, double latDest, double lonDest) throws IOException{
+    public List<List<HashMap<String, String>>> getDirections(double lat,double lon, double latDest, double lonDest) throws IOException{
         String key = mContext.getResources().getString(R.string.google_maps_key);
         String urlDestination = "https://maps.googleapis.com/maps/api/directions/json?origin="
                 + lat + "," + lon + "&destination= " + latDest + "," + lonDest + "&key="+key;
@@ -43,7 +43,6 @@ public class urlFetch {
         Request request = new Request.Builder().url(urlDestination).build();
 
         OkHttpClient client = new OkHttpClient();
-
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -61,13 +60,14 @@ public class urlFetch {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-
                 //Log.v("JsonData",JSONData);
                 if (response.isSuccessful()){
                     parse(JObject);
+
                 }
             }
         });
+        return routes;
     }
 
 

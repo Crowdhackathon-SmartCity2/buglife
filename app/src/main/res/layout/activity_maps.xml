@@ -58,7 +58,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_marginBottom="25dp"
-            android:layout_marginEnd="40dp"
+            android:layout_marginEnd="60dp"
             android:text="START"
             style="@style/Widget.AppCompat.Button.Colored"
             android:background="@drawable/start_button"/>

@@ -83,7 +83,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
         locationSearch = findViewById(R.id.editText);
         startButton = findViewById(R.id.start_button);
-
+        startButton.setVisibility(View.INVISIBLE);
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -260,8 +260,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         mLastLocation.getLongitude()
                         ,address.getLatitude()
                         ,address.getLongitude());
-                routes = url.getRoutes();
-
+                while (routes == null) {
+                    routes = url.getRoutes();
+                }
+                startButton.setVisibility(View.VISIBLE);
                 mMap.addMarker(new MarkerOptions().position(latLng).title("Marker"));
                 // make the camera go to the searched place
 
