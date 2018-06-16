@@ -64,18 +64,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
     Marker mCurrLocationMarker;
-    DirectionsHandler mHandler;
     EditText locationSearch;
     Button startButton;
     private final int MY_PERMISSIONS_REQUEST_GPS = 0;
     Location locationForGps;
     Gps gps;
     float zoom = 16.0f;
-    private List<List<HashMap<String, String>>> routes = null;
+    private List<List<HashMap<String, String>>> routes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState); 
+        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -88,9 +87,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (routes != null) {
                     drawRoute(routes);
-                }
             }
         });
         requestPermission();
@@ -259,7 +256,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Address address = addressList.get(0);
                 LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
                 urlFetch url = new urlFetch(this);
-                mHandler = url.getDirections(mLastLocation.getLatitude(),
+                url.getDirections(mLastLocation.getLatitude(),
                         mLastLocation.getLongitude()
                         ,address.getLatitude()
                         ,address.getLongitude());

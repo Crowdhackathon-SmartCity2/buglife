@@ -24,8 +24,7 @@ import okhttp3.Response;
 
 public class urlFetch {
     Context mContext;
-    private DirectionsHandler mHandler;
-    private List<List<HashMap<String, String>>> routes = null;
+    private List<List<HashMap<String, String>>> routes;
 
     public List<List<HashMap<String, String>>> getRoutes() {
         return routes;
@@ -36,7 +35,7 @@ public class urlFetch {
     }
 
 
-    public DirectionsHandler getDirections(double lat,double lon, double latDest, double lonDest) throws IOException{
+    public void getDirections(double lat,double lon, double latDest, double lonDest) throws IOException{
         String key = mContext.getResources().getString(R.string.google_maps_key);
         String urlDestination = "https://maps.googleapis.com/maps/api/directions/json?origin="
                 + lat + "," + lon + "&destination= " + latDest + "," + lonDest + "&key="+key;
@@ -56,31 +55,28 @@ public class urlFetch {
             public void onResponse(Call call, Response response) throws IOException {
                 String JSONData = response.body().string();
 
-                JSONObject Jobject = null;
+                JSONObject JObject = null;
                 try {
-                    Jobject = new JSONObject(JSONData);
+                    JObject = new JSONObject(JSONData);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
 
                 //Log.v("JsonData",JSONData);
                 if (response.isSuccessful()){
-                    routes = parse(Jobject);
-
-                    mHandler = new DirectionsHandler(JSONData);
+                    parse(JObject);
                 }
             }
         });
-        return mHandler;
     }
 
 
-    private List<List<HashMap<String,String>>> parse(JSONObject jObject){
+    private void parse(JSONObject jObject){
 
-        List<List<HashMap<String, String>>> routes = new ArrayList<List<HashMap<String,String>>>() ;
-        JSONArray jRoutes = null;
-        JSONArray jLegs = null;
-        JSONArray jSteps = null;
+        routes = new ArrayList<>();
+        JSONArray jRoutes;
+        JSONArray jLegs;
+        JSONArray jSteps;
 
         try {
 
@@ -89,7 +85,7 @@ public class urlFetch {
             // Traversing all routes
             for(int i=0;i<jRoutes.length();i++){
                 jLegs = ( (JSONObject)jRoutes.get(i)).getJSONArray("legs");
-                List path = new ArrayList<HashMap<String, String>>();
+                List<HashMap<String, String>> path = new ArrayList<>();
 
                 // Traversing all legs
                 for(int j=0;j<jLegs.length();j++){
@@ -97,15 +93,15 @@ public class urlFetch {
 
                     // Traversing all steps
                     for(int k=0;k<jSteps.length();k++){
-                        String polyline = "";
+                        String polyline;
                         polyline = (String)((JSONObject)((JSONObject)jSteps.get(k)).get("polyline")).get("points");
-                        List list = decodePoly(polyline);
+                        List<LatLng> list = decodePoly(polyline);
 
                         // Traversing all points
                         for(int l=0;l <list.size();l++){
-                            HashMap<String, String> hm = new HashMap<String, String>();
-                            hm.put("lat", Double.toString(((LatLng)list.get(l)).latitude) );
-                            hm.put("lng", Double.toString(((LatLng)list.get(l)).longitude) );
+                            HashMap<String, String> hm = new HashMap<>();
+                            hm.put("lat", Double.toString((list.get(l)).latitude) );
+                            hm.put("lng", Double.toString((list.get(l)).longitude) );
                             path.add(hm);
                         }
                     }
@@ -118,13 +114,12 @@ public class urlFetch {
         }catch (Exception e){
         }
 
-        return routes;
     }
 
 
-    private List decodePoly(String encoded) {
+    private List<LatLng> decodePoly(String encoded) {
 
-        List poly = new ArrayList();
+        List<LatLng> poly = new ArrayList<>();
         int index = 0, len = encoded.length();
         int lat = 0, lng = 0;
 
