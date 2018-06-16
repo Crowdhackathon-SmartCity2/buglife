@@ -24,6 +24,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -65,6 +66,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Marker mCurrLocationMarker;
     DirectionsHandler mHandler;
     EditText locationSearch;
+    Button startButton;
     private final int MY_PERMISSIONS_REQUEST_GPS = 0;
     Location locationForGps;
     Gps gps;
@@ -73,7 +75,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        super.onCreate(savedInstanceState); 
         setContentView(R.layout.activity_maps);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -81,6 +83,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         locationSearch = findViewById(R.id.editText);
+        startButton = findViewById(R.id.start_button);
+
+        startButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (routes != null) {
+                    drawRoute(routes);
+                }
+            }
+        });
         requestPermission();
     }
 
