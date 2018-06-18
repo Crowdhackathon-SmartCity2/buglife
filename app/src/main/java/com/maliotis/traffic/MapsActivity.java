@@ -14,6 +14,7 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -275,6 +276,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             } catch (IOException e) {
                 // TODO: Here we need to handle the exception when the search doesn't exist
                 //TODO: P.M Show a fragment UI explaining the user what went wrong
+                showAlertDialog();
                 e.printStackTrace();
             }
 
@@ -352,4 +354,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return bitmap;
     }
 
+
+    //TODO: P.M
+    //Arguments needed in showAlertDialog....
+    void showAlertDialog() {
+        AlertDialogFragment fragment = new AlertDialogFragment();
+        Bundle args = new Bundle();
+        args.putString("title","Opps");
+        args.putString("message","Something went wrong");
+        args.putString("positiveButton","OK");
+        args.putString("negativeButton","Cancel");
+        fragment.setArguments(args);
+        fragment.show(getSupportFragmentManager(),"error_dialog");
+    }
 }
