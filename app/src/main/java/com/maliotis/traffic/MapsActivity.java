@@ -55,6 +55,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
@@ -71,7 +72,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private final int MY_PERMISSIONS_REQUEST_GPS = 0;
     Location locationForGps;
     Gps gps;
-    float zoom = 16.0f;
+    float zoom = 17f;
+    float tilt = 0f;
+    float bearing = 0f;
+    boolean followUser= false;
     private List<List<HashMap<String, String>>> routes;
 
     @Override
@@ -89,7 +93,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                    followUser = true;
                     drawRoute(routes);
+
             }
         });
         requestPermission();
@@ -103,7 +109,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (mGoogleApiClient != null) {
             FusedLocationProviderClient client = new FusedLocationProviderClient(this);
             //client.removeLocationUpdates();
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, (com.google.android.gms.location.LocationListener) this);
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient,this);
         }
     }
 
@@ -141,28 +147,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onLocationChanged(Location location)
     {
         mLastLocation = location;
-        if (mCurrLocationMarker != null) {
-           mCurrLocationMarker.remove();
-           //if driving mode true then
-           zoom = mMap.getCameraPosition().zoom;
+        if (followUser) {
+           //mCurrLocationMarker.remove();
+           updateCameraToFollowUser();
         }
+        else {
 
-        //Place current location marker
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(latLng);
-        markerOptions.title("Current Position");
-        //markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
-        mCurrLocationMarker = mMap.addMarker(markerOptions);
+            //Place current location marker
+            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.position(latLng);
+            markerOptions.title("Current Position");
+            //markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+            //mCurrLocationMarker = mMap.addMarker(markerOptions);
 
-        //move map camera and rotate
-        updateCameraBearing(location.getBearing());
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,zoom));
-
+            //move map camera and rotate
+            updateCameraBearing(location.getBearing());
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+        }
     }
 
-
-
+    public void updateCameraToFollowUser() {
+        LatLng latLng = new LatLng(mLastLocation.getLatitude(),
+                mLastLocation.getLongitude());
+        tilt = 37f;
+        zoom = 17.5f;
+        CameraPosition cameraPosition = new CameraPosition(latLng,zoom,tilt,bearing);
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+    }
 
     /**
      * Tries to request permission if its not granted by the user
@@ -296,7 +308,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.setMyLocationEnabled(true);
         buildGoogleApiClient();
-        mMap.setTrafficEnabled(true);
+        //mMap.setTrafficEnabled(true);
     }
 
 
@@ -323,7 +335,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             lineOptions.addAll(points);
             lineOptions.width(12);
-            lineOptions.color(Color.RED);
+            lineOptions.color(Color.CYAN);
             lineOptions.geodesic(true);
 
         }

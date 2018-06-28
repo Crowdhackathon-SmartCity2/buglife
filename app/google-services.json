@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "705594673521",
+    "firebase_url": "https://ne-7aac7.firebaseio.com",
+    "project_id": "ne-7aac7",
+    "storage_bucket": "ne-7aac7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:705594673521:android:8e9d3188a58f2d19",
+        "android_client_info": {
+          "package_name": "com.maliotis.traffic"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "705594673521-dt0vsflosnohobdmj21nrmbudaa3s11f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBSBmn0L8Bk8VskNClFFGkAu8TWDZQESdU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -60,7 +60,7 @@ public class urlFetch {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                //Log.v("JsonData",JSONData);
+                Log.v("JsonData",JSONData);
                 if (response.isSuccessful()){
                     parse(JObject);
 
