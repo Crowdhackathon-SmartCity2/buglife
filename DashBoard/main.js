@@ -2,9 +2,6 @@ var map;
 
 var messagesRef = new Firebase("https://ne-7aac7.firebaseio.com/");
 
-function writeUserData() {
-    messagesRef.push({ "TEST123TEST": 1555151 });
-}
 
 function initMap() {
     var myLatlng = { lat: -25.363, lng: 131.044 };
@@ -21,6 +18,12 @@ function initMap() {
     });
 
     marker.addListener('click', function () {
-        writeUserData();
+        for (i  = 0; i < 10; i++) {
+            addWaypoint("123a321b32a21c543a34b23a513"+i, 5+i);
+        }
     });
+}
+
+function addWaypoint(waypoint, percentDisabled) {
+    messagesRef.child("Waypoints").update({ [waypoint]:percentDisabled });
 }
