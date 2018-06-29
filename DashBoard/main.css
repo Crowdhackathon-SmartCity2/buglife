@@ -1,0 +1,13 @@
+#stats {
+  height: 20%;
+}
+
+#map {
+  height: 80%;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
