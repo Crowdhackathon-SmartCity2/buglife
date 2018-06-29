@@ -147,6 +147,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
+
+        User user = new User(1,2,new LatLng(15.55,16.4322));
+        user.setNextWaypoint(new LatLng(15.56, 16.434));
+        user.sendWaypoint();
+
+
     }
 
     private void collectAllDb(Map<String,Object> db) {
@@ -487,8 +493,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             latlng1 = parts[0].split(",");
             latlng2 = parts[1].split(",");
 
-            LatLng position = new LatLng(parseDouble(latlng1[0]), parseDouble(latlng1[1]));
-            LatLng nextWaypoint = new LatLng(parseDouble(latlng2[0]), parseDouble(latlng2[1]));
+            LatLng position = new LatLng(Double.parseDouble(latlng1[0]), Double.parseDouble(latlng1[1]));
+            LatLng nextWaypoint = new LatLng(Double.parseDouble(latlng2[0]), Double.parseDouble(latlng2[1]));
 
             points.add(position);
             points.add(nextWaypoint);
