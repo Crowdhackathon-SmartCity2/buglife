@@ -32,6 +32,6 @@ public class User {
     }
 
     public void sendWaypoint(){
-        myRef.setValue(position+"");
+        myRef.setValue(position + " " + nextWaypoint);
     }
 }
