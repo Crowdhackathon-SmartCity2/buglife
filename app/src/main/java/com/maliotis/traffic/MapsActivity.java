@@ -33,6 +33,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -74,6 +76,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     boolean followUser= false;
     boolean test = true;
     private FloatingActionButton fab;
+    ArrayList<String> crashChild;
+    //ArrayList<Long> trafficChild;
+    Map<String,Long> trafficChild;
     private List<List<HashMap<String, String>>> routes;
     int seconds;
     TimerTask mTimerTask;
@@ -121,7 +126,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 collectAllDb((Map<String,Object>) dataSnapshot.getValue());
-                Log.d("Value","Value is");
+                Log.d("DataSnapShot","Works :)");
             }
 
             @Override
@@ -133,31 +138,46 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             reference.child("Crash").child("ValueForRoute").setValue("lueForRoute");
             test = false;
         }
+
+        Circle circle = mMap.addCircle(new CircleOptions()
+                            .center(new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude()))
+                            .radius(500)
+                            .strokeColor(Color.RED)
+                            .fillColor(Color.BLUE));
+
     }
 
     private void collectAllDb(Map<String,Object> db) {
-        ArrayList<String> dbChilds = new ArrayList<>();
+        //ArrayList<String> dbChilds = new ArrayList<>();
 
         for (Map.Entry<String,Object> entry: db.entrySet()) {
 
                 Map<String, Object> name = (Map<String, Object>) entry.getValue();
-                if (name.equals("Crash")) {
-                    collectAllCrashes(name);
+                String key = entry.getKey();
+                if (key.equals("Crash")) {
+                    // Crash children will be here !!!
+                    crashChild = new ArrayList<>();
+                    for (Map.Entry<String,Object> entry1: name.entrySet()) {
+                        String cChild = (String) entry1.getValue();
+                        crashChild.add(cChild);
+                        Log.d("CrashChild",cChild);
+                    }
 
-                } else if (name.equals("Traffic")) {
+                } else if (key.equals("Traffic")) {
+                    trafficChild = new HashMap<>();
 
+                    for (Map.Entry<String,Object> entry2: name.entrySet()) {
+                        long tChild = (long) entry2.getValue();
+                        String kName = entry2.getKey();
+                        trafficChild.put(kName,tChild);
+                        Log.d("TrafficChild","Name: "+kName+", Value: "+tChild+"");
+                    }
                 }
 
         }
     }
 
-    private void collectAllCrashes(Map name) {
-        ArrayList<String> ChildOfCrash = new ArrayList<>();
 
-        //for (Map.Entry<String,Object> entry: name.entrySet()) {
-
-        //}
-    }
 
     private void countingSeconds() {
 
@@ -430,6 +450,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         }
         mMap.addPolyline(lineOptions);
+    }
+
+    public void drawTraffic (Map<String,Long> traffic) {
+        //TODO: kostas 
+
     }
 
     private void updateCameraBearing(float bearing) {
