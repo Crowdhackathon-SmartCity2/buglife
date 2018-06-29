@@ -540,6 +540,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .bearing(bearing)
                 .build();
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos));
+        
     }
 
     public static Bitmap getBitmapFromVectorDrawable(Context context, int drawableId) {
