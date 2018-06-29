@@ -38,7 +38,8 @@ public class urlFetch {
     public List<List<HashMap<String, String>>> getDirections(double lat,double lon, double latDest, double lonDest) throws IOException{
         String key = mContext.getResources().getString(R.string.google_maps_key);
         String urlDestination = "https://maps.googleapis.com/maps/api/directions/json?origin="
-                + lat + "," + lon + "&destination= " + latDest + "," + lonDest + "&key="+key;
+                + lat + "," + lon + "&destination=" + latDest + "," + lonDest +"&alternatives=true"+ "&key="+key;
+        Log.d("URL",urlDestination);
 
         Request request = new Request.Builder().url(urlDestination).build();
 

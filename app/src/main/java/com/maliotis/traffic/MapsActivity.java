@@ -188,7 +188,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 @Override
                 public void run() {
                     seconds++;
-                    reference.child("Crash").child("ValueForRoute").setValue("" + seconds);
                     Log.d("Timer", "" + seconds);
                 }
             };
