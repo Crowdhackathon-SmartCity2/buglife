@@ -444,7 +444,50 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void drawTraffic (Map<String,Long> traffic) {
-        //TODO: kostas
+        MarkerOptions markerOptions = new MarkerOptions();
+        long duration = 0;
+        String waypoint;
+        String[] parts;
+        String[] latlng1;
+        String[] latlng2;
+
+        //String == waypoint,   Key
+        //Long == dealy,  Value
+        for (Map.Entry<String,Long> entry: traffic.entrySet()){
+            ArrayList points = null;
+            PolylineOptions lineOptions = null;
+
+            waypoint = entry.getKey();
+            duration = entry.getValue();
+
+            parts = waypoint.split(" ");
+            latlng1 = parts[0].split(",");
+            latlng2 = parts[1].split(",");
+
+            LatLng position = new LatLng(Double.parseDouble(latlng1[0]), Double.parseDouble(latlng1[1]);
+            LatLng nextWaypoint = new LatLng(Double.parseDouble(latlng2[0], Double.parseDouble(latlng2[1]);
+
+            points.add(position);
+            points.add(nextWaypoint);
+
+            lineOptions.addAll(points);
+            lineOptions.width(12);
+
+            if (duration <= 1) {
+                lineOptions.color(Color.GREEN);
+            } else if (duration <= 2){
+                lineOptions.color(Color.YELLOW);
+            } else if (duration <= 3){
+                lineOptions.color(Color.RED);
+            }
+
+            lineOptions.geodesic(true);
+
+            mMap.addPolyline(lineOptions);
+        }
+
+
+
 
     }
 
