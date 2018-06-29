@@ -436,7 +436,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             lineOptions.addAll(points);
             lineOptions.width(12);
-            lineOptions.color(Color.CYAN);
+            lineOptions.color(Color.BLUE);
             lineOptions.geodesic(true);
 
         }
@@ -444,7 +444,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void drawTraffic (Map<String,Long> traffic) {
-        //TODO: kostas 
+        //TODO: kostas
 
     }
 
