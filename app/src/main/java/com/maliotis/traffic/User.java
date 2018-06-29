@@ -6,7 +6,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 public class User {
     private FirebaseDatabase database = FirebaseDatabase.getInstance();
-    private DatabaseReference myRef = database.getReference("route");
+    private DatabaseReference myRef = database.getReference("Traffic");
 
     private int id;
     private int points;
@@ -32,6 +32,6 @@ public class User {
     }
 
     public void sendWaypoint(){
-        myRef.setValue(position + " " + nextWaypoint);
+        myRef.child(position + " " + nextWaypoint).setValue(0L);
     }
 }
