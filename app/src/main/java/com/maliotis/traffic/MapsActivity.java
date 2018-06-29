@@ -9,26 +9,19 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.location.LocationListener;
-import android.os.Build;
 import android.support.annotation.NonNull;
-import android.support.design.widget.BottomSheetBehavior;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.location.Address;
 import android.location.Geocoder;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -39,23 +32,25 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.JointType;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutionException;
+
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
@@ -65,7 +60,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     LocationRequest mLocationRequest;
     GoogleApiClient mGoogleApiClient;
-    Location mLastLocation;
+    Location mLastLocation,previousLocation;
+    boolean firstmLastLocationIsUsed = true;
     Marker mCurrLocationMarker;
     EditText locationSearch;
     Button startButton;
@@ -76,7 +72,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     float tilt = 0f;
     float bearing = 0f;
     boolean followUser= false;
+    boolean test = true;
+    private FloatingActionButton fab;
     private List<List<HashMap<String, String>>> routes;
+    int seconds;
+    TimerTask mTimerTask;
+    Timer timer;
+    DatabaseReference reference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,15 +92,88 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         locationSearch = findViewById(R.id.editText);
         startButton = findViewById(R.id.start_button);
         startButton.setVisibility(View.INVISIBLE);
+
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                     followUser = true;
                     drawRoute(routes);
+                    countingSeconds();
+            }
+        });
+
+
+
+        requestPermission();
+
+        fab = findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
             }
         });
-        requestPermission();
+
+
+        FirebaseDatabase db = FirebaseDatabase.getInstance();
+        reference = db.getReference();
+        reference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                collectAllDb((Map<String,Object>) dataSnapshot.getValue());
+                Log.d("Value","Value is");
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+        if (test) {
+            reference.child("Crash").child("ValueForRoute").setValue("lueForRoute");
+            test = false;
+        }
+    }
+
+    private void collectAllDb(Map<String,Object> db) {
+        ArrayList<String> dbChilds = new ArrayList<>();
+
+        for (Map.Entry<String,Object> entry: db.entrySet()) {
+
+                Map<String, Object> name = (Map<String, Object>) entry.getValue();
+                if (name.equals("Crash")) {
+                    collectAllCrashes(name);
+
+                } else if (name.equals("Traffic")) {
+
+                }
+
+        }
+    }
+
+    private void collectAllCrashes(Map name) {
+        ArrayList<String> ChildOfCrash = new ArrayList<>();
+
+        //for (Map.Entry<String,Object> entry: name.entrySet()) {
+
+        //}
+    }
+
+    private void countingSeconds() {
+
+        if (mTimerTask==null) {
+            mTimerTask = new TimerTask() {
+                @Override
+                public void run() {
+                    seconds++;
+                    reference.child("Crash").child("ValueForRoute").setValue("" + seconds);
+                    Log.d("Timer", "" + seconds);
+                }
+            };
+            timer = new Timer();
+            timer.schedule(mTimerTask,500L,1000L);
+        }
+
     }
 
     @Override
@@ -146,7 +221,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onLocationChanged(Location location)
     {
-        mLastLocation = location;
+
+        if (firstmLastLocationIsUsed){
+            mLastLocation = location;
+            previousLocation = mLastLocation;
+            firstmLastLocationIsUsed = false;
+        } else {
+            previousLocation = mLastLocation;
+            mLastLocation = location;
+        }
+        if (previousLocation.getLongitude() - mLastLocation.getLongitude() >= Math.abs(3) ||
+                previousLocation.getLatitude() - mLastLocation.getLatitude() >= Math.abs(3)) {
+            seconds = 0;
+        }
+
+
         if (followUser) {
            //mCurrLocationMarker.remove();
            updateCameraToFollowUser();
@@ -306,6 +395,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.getUiSettings().setMyLocationButtonEnabled(true);
         mMap.setMyLocationEnabled(true);
         buildGoogleApiClient();
         //mMap.setTrafficEnabled(true);
