@@ -60,7 +60,7 @@
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginTop="8dp"
-        android:background="#00FFFFF"
+        android:background="#00FFFFFF"
         android:text="Register"
         android:textColor="@android:color/white"
         android:textSize="18sp"

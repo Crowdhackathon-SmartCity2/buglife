@@ -9,6 +9,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -32,6 +33,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
@@ -44,6 +47,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.maps.android.PolyUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -52,6 +56,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import static java.lang.Double.parseDouble;
 
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
@@ -63,6 +69,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     LocationRequest mLocationRequest;
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation,previousLocation;
+    Location locationFromProvince;
     boolean firstmLastLocationIsUsed = true;
     Marker mCurrLocationMarker;
     EditText locationSearch;
@@ -78,6 +85,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private FloatingActionButton fab;
     ArrayList<String> crashChild;
     //ArrayList<Long> trafficChild;
+    ArrayList points;
     Map<String,Long> trafficChild;
     private List<List<HashMap<String, String>>> routes;
     int seconds;
@@ -90,6 +98,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+
+        FirebaseDatabase db = FirebaseDatabase.getInstance();
+        reference = db.getReference();
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -107,26 +118,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-
-
         requestPermission();
 
         fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                //TODO alert db with users location
+                reference.child("Crash").push().setValue(mLastLocation.getLatitude()+","+mLastLocation.getLongitude());
             }
         });
 
 
-        FirebaseDatabase db = FirebaseDatabase.getInstance();
-        reference = db.getReference();
+
         reference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 collectAllDb((Map<String,Object>) dataSnapshot.getValue());
                 Log.d("DataSnapShot","Works :)");
+                if (!crashChild.isEmpty()){
+                    drawAccident();
+                }
             }
 
             @Override
@@ -134,16 +146,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             }
         });
-        if (test) {
-            reference.child("Crash").child("ValueForRoute").setValue("lueForRoute");
-            test = false;
-        }
-
-        Circle circle = mMap.addCircle(new CircleOptions()
-                            .center(new LatLng(mLastLocation.getLatitude(),mLastLocation.getLongitude()))
-                            .radius(500)
-                            .strokeColor(Color.RED)
-                            .fillColor(Color.BLUE));
 
     }
 
@@ -245,17 +247,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (firstmLastLocationIsUsed){
             mLastLocation = location;
             previousLocation = mLastLocation;
-            firstmLastLocationIsUsed = false;
         } else {
             previousLocation = mLastLocation;
             mLastLocation = location;
         }
-        if (previousLocation.getLongitude() - mLastLocation.getLongitude() >= Math.abs(3) ||
-                previousLocation.getLatitude() - mLastLocation.getLatitude() >= Math.abs(3)) {
+        float[] results = new float[1];
+        Location.distanceBetween(previousLocation.getLatitude(),
+                previousLocation.getLongitude(),
+                mLastLocation.getLatitude(),
+                mLastLocation.getLongitude(),
+                results);
+        if (results[0] > 1) {
             seconds = 0;
         }
 
 
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         if (followUser) {
            //mCurrLocationMarker.remove();
            updateCameraToFollowUser();
@@ -263,16 +270,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         else {
 
             //Place current location marker
-            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            MarkerOptions markerOptions = new MarkerOptions();
-            markerOptions.position(latLng);
-            markerOptions.title("Current Position");
-            //markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
-            //mCurrLocationMarker = mMap.addMarker(markerOptions);
+            if (firstmLastLocationIsUsed) {
+                MarkerOptions markerOptions = new MarkerOptions();
+                markerOptions.position(latLng);
+                markerOptions.title("Current Position");
+                //markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+                //mCurrLocationMarker = mMap.addMarker(markerOptions);
 
-            //move map camera and rotate
-            updateCameraBearing(location.getBearing());
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+                //move map camera and rotate
+                updateCameraBearing(location.getBearing());
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+            }
+        }
+        if (points!=null) {
+            if ( !points.isEmpty()) {
+                if (PolyUtil.isLocationOnPath(latLng, points, true)) {
+                    //TODO: re-route user
+                }
+            }
         }
     }
 
@@ -423,7 +438,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     public void drawRoute(List<List<HashMap<String, String>>> routes){
-        ArrayList points = null;
+
         PolylineOptions lineOptions = null;
         MarkerOptions markerOptions = new MarkerOptions();
 
@@ -436,8 +451,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             for (int j = 0; j < path.size(); j++) {
                 HashMap<String, String> point = path.get(j);
 
-                double lat = Double.parseDouble(point.get("lat"));
-                double lng = Double.parseDouble(point.get("lng"));
+                double lat = parseDouble(point.get("lat"));
+                double lng = parseDouble(point.get("lng"));
                 LatLng position = new LatLng(lat, lng);
 
                 points.add(position);
@@ -473,8 +488,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             latlng1 = parts[0].split(",");
             latlng2 = parts[1].split(",");
 
-            LatLng position = new LatLng(Double.parseDouble(latlng1[0]), Double.parseDouble(latlng1[1]);
-            LatLng nextWaypoint = new LatLng(Double.parseDouble(latlng2[0], Double.parseDouble(latlng2[1]);
+            LatLng position = new LatLng(parseDouble(latlng1[0]), parseDouble(latlng1[1]));
+            LatLng nextWaypoint = new LatLng(parseDouble(latlng2[0]), parseDouble(latlng2[1]));
 
             points.add(position);
             points.add(nextWaypoint);
@@ -495,8 +510,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.addPolyline(lineOptions);
         }
 
+    }
 
+    public void drawAccident() {
+        //mMap.addMarker();
+        for (String loc: crashChild) {
+            String[] split = loc.split(",");
+            double latitude = Double.parseDouble(split[0]);
+            double longitude = Double.parseDouble(split[1]);
 
+            mMap.addMarker(new MarkerOptions().position(new LatLng(latitude,longitude))
+                    .title("Accident")
+                    .icon(BitmapDescriptorFactory.fromBitmap(getBitmapFromVectorDrawable(this, R.drawable.ic_action_name))));
+        }
 
     }
 
