@@ -22,10 +22,17 @@ function initMap() {
         title: 'Click to zoom'
     });
 
-    marker.addListener('click', function () {
-        for (i = 0; i < 10; i++) {
-            addWaypoint("123a321b32a21c543a34b23a513" + i, 5 + i);
-        }
+    google.maps.event.addListener(map, "click", function (event) {
+
+        //lat and lng is available in e object
+        var lat = event.latLng.lat();
+        var lng = event.latLng.lng();
+
+        var formatedLatLng = (lat + "").replace('.', 'a') + 'b' + (lng + "").replace('.', 'a');
+        //console.log(formatedLatLng);
+        addWaypoint(formatedLatLng, 0);
+
+        addMarker(event.latLng);
     });
 
     // Bias the SearchBox results towards current map's viewport.
@@ -64,6 +71,14 @@ function initMap() {
         });
         map.fitBounds(bounds);
     });
+}
+
+function addMarker(location) {
+    var marker = new google.maps.Marker({
+        position: location,
+        map: map
+    });
+    markers.push(marker);
 }
 
 function addWaypoint(waypoint, percentDisabled) {
