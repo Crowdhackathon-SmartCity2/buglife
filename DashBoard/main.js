@@ -19,6 +19,10 @@ function initMap() {
         zoom: 4,
         center: myLatlng
     });
+
+    var trafficLayer = new google.maps.TrafficLayer();
+    trafficLayer.setMap(map);
+
     var input = document.getElementById('pac-input');
 
     var searchBox = new google.maps.places.SearchBox(input);
@@ -118,8 +122,6 @@ function initMap() {
         roads = [];
         roads = snapshot.val();
 
-        console.log(roads);
-
         for (var i = 0; i < roadMarkers.length; i++) {
             roadMarkers[i].setMap(null);
         }
@@ -127,7 +129,7 @@ function initMap() {
         var latlngs = Object.keys(roads);
 
         latlngs.forEach(element => {
-            LatLng = element.replace('a','.').replace('b',',').replace('a', '.').split(',')
+            LatLng = element.replace('a', '.').replace('b', ',').replace('a', '.').split(',')
             var v1 = parseFloat(LatLng[0]);
             var v2 = parseFloat(LatLng[1]);
             var nLatLng = new Object;
@@ -138,12 +140,12 @@ function initMap() {
                 position: nLatLng,
                 map: map
             });
-            roadMarkers.push(marker); 
+            roadMarkers.push(marker);
 
             var menuwindow = new google.maps.InfoWindow({
                 content: roadMarkerContentString
             });
-        
+
             google.maps.event.addListener(map, "click", function (event) {
                 var marker = new google.maps.Marker({
                     position: event.latLng,
@@ -151,7 +153,7 @@ function initMap() {
                 });
                 marker.set("id", markerID);
                 markers.push([marker, markerID]);
-        
+
                 marker.addListener('click', function () {
                     menuwindow.open(map, marker);
                     markerSelected = marker.get("id");

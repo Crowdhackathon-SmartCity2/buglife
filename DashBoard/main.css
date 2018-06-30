@@ -24,6 +24,7 @@ html, body {
 
 .bar1 {
   height: 25px;
+  width: 90%;
   background-color: green;
   display: inline-block;
 }
@@ -50,6 +51,20 @@ html, body {
   width: 20%;
   background-color: rgb(40, 240, 13);
   display: inline-block;
+}
+
+#eventbox {
+  left: 1%;
+  height: 40%;
+  width: 18%;
+  position:absolute;
+  top:100vh;
+  transform:translateY(-100%);
+  background-color: rgb(31, 31, 31);
+}
+
+.event {
+  margin: 10%;
 }
 
 .tact {
