@@ -2,6 +2,9 @@ var map;
 var markerID = 0;
 var markerSelected = 0;
 var markers = [];
+var crashMarkers = [];
+
+var crashes = [];
 
 var messagesRef = new Firebase("https://ne-7aac7.firebaseio.com/");
 
@@ -18,21 +21,13 @@ function initMap() {
     var places = searchBox.getPlaces();
     var bounds = new google.maps.LatLngBounds();
 
-    var contentString = '<button class="markerRemove">X</button><input type="text" /><button>Done</button><br><p style="color: black">Leof. Andrea Siggrou</p>';
+    var contentString = '<button class="markerRemove">X</button><button class="send">Done</button><br><p style="color: black">Leof. Andrea Siggrou</p>';
 
     var infowindow = new google.maps.InfoWindow({
         content: contentString
     });
 
     google.maps.event.addListener(map, "click", function (event) {
-
-        //lat and lng is available in e object
-        var lat = event.latLng.lat();
-        var lng = event.latLng.lng();
-
-        var formatedLatLng = (lat + "").replace('.', 'a') + 'b' + (lng + "").replace('.', 'a');
-        addWaypoint(formatedLatLng, 0);
-
         var marker = new google.maps.Marker({
             position: event.latLng,
             map: map
@@ -83,6 +78,42 @@ function initMap() {
         });
         map.fitBounds(bounds);
     });
+
+    messagesRef.child("Crash").on("value", function (snapshot) {
+        crashes = [];
+        crashes = snapshot.val();
+
+        var icon = {
+            url: "./icons/crash.png",
+            scaledSize: new google.maps.Size(25, 25), // scaled size
+            origin: new google.maps.Point(0,0), // origin
+            anchor: new google.maps.Point(0, 0) // anchor
+        };
+
+        //drawCrashes();
+        for (var i = 0; i < crashMarkers.length; i++) {
+            crashMarkers[i].setMap(null);
+            console.log(crashMarkers);
+        }
+        
+        for (var propt in crashes) {
+            var LatLng = crashes[propt].split(',');
+            var v1 = parseFloat(LatLng[0]);
+            var v2 = parseFloat(LatLng[1]);
+            var nLatLng = new Object;
+            nLatLng["lat"] = v1;
+            nLatLng["lng"] = v2;          
+            var marker = new google.maps.Marker({
+                position: nLatLng,
+                icon: icon,
+                map: map
+            });
+            crashMarkers.push(marker);
+        }
+    }, function (errorObject) {
+        console.log("The read failed: " + errorObject.code);
+    });
+    
 }
 
 function addWaypoint(waypoint, percentDisabled) {
@@ -95,10 +126,24 @@ $(document).ready(function () {
         markers.forEach(function (index) {
             //search for the marker that we have last selected
             if (index[1] == markerSelected) {
-                console.log("hello " + markers.indexOf(index));
                 markers[markers.indexOf(index)][0].setMap(null);
                 markers.splice(markers.indexOf(index), 1);
             }
         });
+    });
+
+    $(document).on('click', '.send', function () {
+        var LatLng;
+        markers.forEach(function (index) {
+            //search for the marker that we have last selected
+            if (index[1] == markerSelected) {
+                LatLng = markers[markers.indexOf(index)][0].internalPosition;
+            }
+        });
+        var lat = LatLng.lat();
+        var lng = LatLng.lng();
+
+        var formatedLatLng = (lat + "").replace('.', 'a') + 'b' + (lng + "").replace('.', 'a');
+        addWaypoint(formatedLatLng, 0);
     });
 });
