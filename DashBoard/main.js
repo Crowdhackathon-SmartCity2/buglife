@@ -1,4 +1,5 @@
 var map;
+var markers = [];
 
 var messagesRef = new Firebase("https://ne-7aac7.firebaseio.com/");
 
@@ -13,14 +14,7 @@ function initMap() {
 
     var searchBox = new google.maps.places.SearchBox(input);
     var places = searchBox.getPlaces();
-    //map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
     var bounds = new google.maps.LatLngBounds();
-
-    var marker = new google.maps.Marker({
-        position: myLatlng,
-        map: map,
-        title: 'Click to zoom'
-    });
 
     google.maps.event.addListener(map, "click", function (event) {
 
@@ -29,10 +23,18 @@ function initMap() {
         var lng = event.latLng.lng();
 
         var formatedLatLng = (lat + "").replace('.', 'a') + 'b' + (lng + "").replace('.', 'a');
-        //console.log(formatedLatLng);
         addWaypoint(formatedLatLng, 0);
 
-        addMarker(event.latLng);
+        var marker = new google.maps.Marker({
+            position: event.latLng,
+            map: map
+        });
+        markers.push(marker);
+
+        marker.addListener('click', function () {
+            map.setZoom(8);
+            map.setCenter(marker.getPosition());
+        });
     });
 
     // Bias the SearchBox results towards current map's viewport.
@@ -71,14 +73,6 @@ function initMap() {
         });
         map.fitBounds(bounds);
     });
-}
-
-function addMarker(location) {
-    var marker = new google.maps.Marker({
-        position: location,
-        map: map
-    });
-    markers.push(marker);
 }
 
 function addWaypoint(waypoint, percentDisabled) {
