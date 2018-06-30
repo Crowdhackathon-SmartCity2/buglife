@@ -6,7 +6,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Dashboard</title>
     <script src="https://cdn.firebase.com/js/client/2.0.2/firebase.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAdMZd6mAYpeiupJbzSsvRsqaI_EAiNd4E&amp;libraries=geometr‌​y,places&callback=initMap" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAdMZd6mAYpeiupJbzSsvRsqaI_EAiNd4E&amp;libraries=geometr‌​y,places&callback=initMap"
+        async defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <meta name="viewport" content="initial-scale=1.0">
     <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
@@ -14,9 +15,12 @@
 </head>
 
 <body>
-    <div id="stats"></div>
+
     <input id="pac-input" class="controls" type="text" placeholder="Search Box">
-    <div id="map"></div>
+    <div class="wrapper">
+        <div id="stats" class="box"></div>
+        <div id="map" class="box"></div>
+    </div>
 </body>
 
 </html>

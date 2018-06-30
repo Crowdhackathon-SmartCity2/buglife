@@ -1,15 +1,21 @@
-#stats {
-  height: 20%;
-}
-
-#map {
-  height: 80%;
-}
-
 html, body {
-  height: 100%;
   margin: 0;
   padding: 0;
+  height: 100%;
+}
+
+.wrapper {
+  display: grid;
+  height: 100%;
+  grid-template-columns: 20% 80%;
+  background-color: #fff;
+  color: #444;
+}
+
+.box {
+  background-color: #444;
+  color: #fff;
+  font-size: 100%;
 }
 
 .pac-card {
