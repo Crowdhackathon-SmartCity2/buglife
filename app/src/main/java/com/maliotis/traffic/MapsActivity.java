@@ -80,28 +80,38 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Location locationForGps;
     Gps gps;
     float zoom = 17f;
+    int crashSize = 0;
     float tilt = 0f;
     float bearing = 0f;
     boolean followUser= false;
     boolean test = true;
+    boolean zoomToUser = true;
+    boolean userWasBlocked;
     private FloatingActionButton fab;
     ArrayList<String> crashChild;
-    //ArrayList<Long> trafficChild;
+    Location endDestination;
     ArrayList<LatLng> points;
     Map<String,Long> trafficChild;
     private List<List<HashMap<String, String>>> routes;
+    private List<List<HashMap<String, String>>> wayRoutes;
+    List<LatLng> waypoint;
     int seconds;
     TimerTask mTimerTask;
     Polyline polyline;
     Timer timer;
     DatabaseReference reference;
+    User mUser;
+    urlFetch url;
+    Address address;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-
-
+        //mUser will be pointing to the user logged in
+        //For test purposes create one out of the blue :)
+        mUser = new User("tcIaB5S3yueiLFSvDtS73cin6ZB2",10);
+        waypoint = new ArrayList<>();
         FirebaseDatabase db = FirebaseDatabase.getInstance();
         reference = db.getReference();
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -118,6 +128,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     followUser = true;
                     drawRoute(routes,0);
                     countingSeconds();
+                    updateCameraToFollowUser();
             }
         });
 
@@ -150,12 +161,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-
-        User user = new User(1,2,new LatLng(15.55,16.4322));
-        user.setNextWaypoint(new LatLng(15.56, 16.434));
-        user.sendWaypoint();
-
-
+        //Testing showAlertDialogToRewardUser ....
+        showAlertDialogToRewardUser();
     }
 
     private void collectAllDb(Map<String,Object> db) {
@@ -183,6 +190,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         trafficChild.put(kName,tChild);
                         Log.d("TrafficChild","Name: "+kName+", Value: "+tChild+"");
                     }
+                } else if (key.equals("Waypoints")) {
+
+                    for (Map.Entry<String,Object> way: name.entrySet()) {
+                        String encWaypoint = (String) way.getKey();
+                        encWaypoint = encWaypoint.replaceAll("a",".");
+                        encWaypoint = encWaypoint.replaceAll("b",",");
+                        String[] array = encWaypoint.split(",");
+                        waypoint.add(new LatLng(Double.parseDouble(array[0]),Double.parseDouble(array[1])));
+
+                    }
+
                 }
 
         }
@@ -255,10 +273,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (firstmLastLocationIsUsed){
             mLastLocation = location;
             previousLocation = mLastLocation;
+            firstmLastLocationIsUsed = false;
         } else {
             previousLocation = mLastLocation;
             mLastLocation = location;
         }
+        mUser.setPosition(new LatLng(mLastLocation.getLatitude(),
+                mLastLocation.getLongitude()));
         float[] results = new float[1];
         Location.distanceBetween(previousLocation.getLatitude(),
                 previousLocation.getLongitude(),
@@ -278,8 +299,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 //           endLocationWaypoint.setLatitude(points.get(0).latitude);
 //           mLastLocation.bearingTo(endLocationWaypoint);
 
+            //Check if he reached the destination!
+            float[] endResult = new float[1];
+            Location.distanceBetween(mLastLocation.getLatitude(),
+                    mLastLocation.getLongitude(),
+                    endDestination.getLatitude(),
+                    endDestination.getLongitude(),
+                    endResult);
+            if (endResult[0] <= 2){
+                //TODO: He reached the final destination reward him if he obeyed
+                mUser.addPoints(10);
+                showAlertDialogToRewardUser();
 
-
+            }
             //Source
             double lat1 = mLastLocation.getLatitude();
             double lng1 = mLastLocation.getLongitude();
@@ -297,23 +329,45 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             brng = (360 - ((brng + 180) % 360));
             bearing = (float) brng;
 
-            updateCameraToFollowUser();
+            //updateCameraToFollowUser();
 
             if (points!=null) {
                 if ( !points.isEmpty()) {
-                    for (String child: crashChild){
-                        String[] array = child.split(",");
-                        LatLng latLng1 = new LatLng(Double.parseDouble(array[0]),Double.parseDouble(array[1]));
-                        if (PolyUtil.isLocationOnPath(latLng1, points, false,20)) {
-                            //TODO: re-route user
-                            polyline.remove();
-                            if (routes.size() >= 2) {
-                                drawRoute(routes, 1);
-                                break;
-                            } else {
-                                //TODO: Alert User that there are no alternative routes
+                    if (waypoint.isEmpty()) {
+                        if (crashSize < crashChild.size()) {
+                            for (String child : crashChild) {
+                                String[] array = child.split(",");
+                                LatLng latLng1 = new LatLng(Double.parseDouble(array[0]), Double.parseDouble(array[1]));
+                                if (PolyUtil.isLocationOnPath(latLng1, points, false, 20)) {
+                                    userWasBlocked = true;
+                                    //TODO: re-route user
+                                    if (routes.size() >= 2) {
+                                        polyline.remove();
+                                        drawRoute(routes, 2);
+                                        crashSize = crashChild.size();
+                                        Log.d("polyline", "Remove");
+                                        Log.d("CrashChild:", crashChild.size() + "");
+                                        break;
+                                    } else {
+                                        //TODO: Alert User that there are no alternative routes
+                                    }
+                                }
                             }
                         }
+                    } else {
+                        polyline.remove();
+                        try {
+                            url.getDirectionsWithWaypoints(mLastLocation.getLatitude(),mLastLocation.getLongitude(),
+                                    waypoint.get(0).latitude,waypoint.get(0).longitude,
+                                    address.getLatitude(),address.getLongitude());
+                            while (wayRoutes == null) {
+                                wayRoutes = url.getRoutes();
+                            }
+                            drawRoute(wayRoutes,1);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
                     }
 
                 }
@@ -323,7 +377,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         else {
 
             //Place current location marker
-            if (firstmLastLocationIsUsed) {
+            if (!firstmLastLocationIsUsed && zoomToUser) {
                 MarkerOptions markerOptions = new MarkerOptions();
                 markerOptions.position(latLng);
                 markerOptions.title("Current Position");
@@ -333,6 +387,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 //move map camera and rotate
                 //updateCameraBearing(location.getBearing());
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+                zoomToUser = false;
             }
         }
 
@@ -352,6 +407,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         markerOptions.position(latLng);
         markerOptions.icon(BitmapDescriptorFactory
                 .fromBitmap(getBitmapFromVectorDrawable(this,R.drawable.ic_navigation_24dp)));
+
+       // mMap.addMarker(markerOptions);
     }
 
     /**
@@ -440,15 +497,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapSearch(View view) {
 
         String location = locationSearch.getText().toString();
-        List<Address>addressList = null;
+        List<Address> addressList;
 
         if (!location.equals("")) {
             Geocoder geocoder = new Geocoder(this);
             try {
                 addressList = geocoder.getFromLocationName(location, 1);
-                Address address = addressList.get(0);
+                address = addressList.get(0);
+                endDestination = new Location(LocationManager.GPS_PROVIDER);
+                endDestination.setLatitude(address.getLatitude());
+                endDestination.setLongitude(address.getLongitude());
                 LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
-                urlFetch url = new urlFetch(this);
+                url = new urlFetch(this);
                 url.getDirections(mLastLocation.getLatitude(),
                         mLastLocation.getLongitude()
                         ,address.getLatitude()
@@ -580,18 +640,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    private void updateCameraBearing(float bearing) {
-        if ( mMap == null) return;
-        CameraPosition camPos = CameraPosition
-                .builder(
-                        mMap.getCameraPosition() // current Camera
-                )
-                .bearing(bearing)
-                .build();
-        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos));
-
-    }
-
     public static Bitmap getBitmapFromVectorDrawable(Context context, int drawableId) {
         Drawable drawable = ContextCompat.getDrawable(context, drawableId);
         drawable = (DrawableCompat.wrap(drawable)).mutate();
@@ -617,5 +665,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         args.putString("negativeButton","Cancel");
         fragment.setArguments(args);
         fragment.show(getSupportFragmentManager(),"error_dialog");
+    }
+
+    void showAlertDialogToRewardUser() {
+        AlertDialogFragment fragment = new AlertDialogFragment();
+        Bundle args = new Bundle();
+        args.putString("title","Hurray");
+        args.putString("message","Congratulations you won "+mUser.getPoints()+" points.");
+        args.putString("positiveButton","OK");
+        fragment.setArguments(args);
+        fragment.show(getSupportFragmentManager(),"reward_dialog");
     }
 }

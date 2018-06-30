@@ -24,6 +24,9 @@ import okhttp3.Response;
 
 public class urlFetch {
     Context mContext;
+
+    double latAvoid,lonAvoid;
+
     private List<List<HashMap<String, String>>> routes;
 
     public List<List<HashMap<String, String>>> getRoutes() {
@@ -34,11 +37,57 @@ public class urlFetch {
         mContext = context;
     }
 
+    public void setAvoid(double latAvoid,double longAvoid) {
+        this.latAvoid = latAvoid;
+        this.lonAvoid = longAvoid;
+    }
+
 
     public List<List<HashMap<String, String>>> getDirections(double lat,double lon, double latDest, double lonDest) throws IOException{
         String key = mContext.getResources().getString(R.string.google_maps_key);
         String urlDestination = "https://maps.googleapis.com/maps/api/directions/json?origin="
                 + lat + "," + lon + "&destination=" + latDest + "," + lonDest +"&alternatives=true"+ "&key="+key;
+        Log.d("URL",urlDestination);
+
+        Request request = new Request.Builder().url(urlDestination).build();
+
+        OkHttpClient client = new OkHttpClient();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                //Error
+                // TODO : Show an alert dialog
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String JSONData = response.body().string();
+
+                JSONObject JObject = null;
+                try {
+                    JObject = new JSONObject(JSONData);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                Log.v("JsonData",JSONData);
+                if (response.isSuccessful()){
+                    parse(JObject);
+
+                }
+            }
+        });
+        return routes;
+    }
+
+
+    //start with lat and lng 1st param start destination 2nd param waypoint 3rd param destination
+    //IMPORTANT !!!!!! called only when AVOID is called first
+    public List<List<HashMap<String,String>>> getDirectionsWithWaypoints(double lat,double lon,
+                                                                         double latWay,double lonWay,
+                                                                         double latDest,double lonDest) throws IOException{
+        String key = mContext.getResources().getString(R.string.google_maps_key);
+        String urlDestination = "https://maps.googleapis.com/maps/api/directions/json?origin="
+                + lat + "," + lon + "&destination=" + latDest + "," + lonDest +"&waypoints="+latWay+","+lonWay+ "&key="+key;
         Log.d("URL",urlDestination);
 
         Request request = new Request.Builder().url(urlDestination).build();

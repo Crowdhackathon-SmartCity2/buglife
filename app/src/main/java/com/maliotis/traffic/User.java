@@ -10,27 +10,32 @@ public class User {
     private FirebaseDatabase database = FirebaseDatabase.getInstance();
     private DatabaseReference myRef = database.getReference("Traffic");
 
-    private int id;
+    private String id;
     private int points;
     private String position;
     private String nextWaypoint;
 
-    public int getId() { return id; }
+    public String getId() { return id; }
 
     public int getPoints() { return points; }
 
-    public void setId(int id) { this.id = id; }
+    public void setId(String id) { this.id = id; }
 
     public void setPoints(int points) { this.points = points; }
+
+    public void addPoints(int points) {
+        this.points += points;
+    }
 
     public void setPosition(LatLng position) { this.position = position + ""; }
 
     public void setNextWaypoint(LatLng nextWaypoint) { this.nextWaypoint = nextWaypoint + ""; }
 
-    public User(int id, int points, LatLng position) {
+    public User(String id, int points) {
         this.id = id;
         this.points = points;
         this.position = position + "";
+        //For testing purposes
     }
 
     public void sendWaypoint(){
