@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Dashboard</title>
+    <script src="https://cdn.firebase.com/js/client/2.0.2/firebase.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAdMZd6mAYpeiupJbzSsvRsqaI_EAiNd4E&amp;libraries=geometr‌​y,places&callback=initMap"
+        async defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <meta name="viewport" content="initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
+    <script src="main.js"></script>
+</head>
+
+<body>
+
+    <input id="pac-input" class="controls" type="text" placeholder="Search Box">
+    <div class="wrapper">
+        <div id="stats" class="box">
+            <dir class="tact">
+                <button class="statbox">HideMarkers</button>
+                <button class="statbox">ShowMarkers</button>
+                <div class="bar1 statbox">
+                    <div class="bar2 statbox">Sigrou</div>
+                </div>
+                <div class="bar1 statbox">
+                    <div class="bar3 statbox">Leof. Andrea Siggrou</div>
+                </div>
+                <div class="bar1 statbox">
+                    <div class="bar4 statbox">Oikonomou</div>
+                </div>
+            </dir>
+        </div>
+        <div id="map" class="box"></div>
+    </div>
+</body>
+
+</html>
