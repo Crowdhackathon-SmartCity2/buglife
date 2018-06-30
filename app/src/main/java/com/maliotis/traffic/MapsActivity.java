@@ -9,6 +9,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.location.LocationManager;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -41,6 +42,7 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -85,11 +87,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private FloatingActionButton fab;
     ArrayList<String> crashChild;
     //ArrayList<Long> trafficChild;
-    ArrayList points;
+    ArrayList<LatLng> points;
     Map<String,Long> trafficChild;
     private List<List<HashMap<String, String>>> routes;
     int seconds;
     TimerTask mTimerTask;
+    Polyline polyline;
     Timer timer;
     DatabaseReference reference;
 
@@ -113,7 +116,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onClick(View v) {
                     followUser = true;
-                    drawRoute(routes);
+                    drawRoute(routes,0);
                     countingSeconds();
             }
         });
@@ -270,7 +273,52 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         if (followUser) {
            //mCurrLocationMarker.remove();
-           updateCameraToFollowUser();
+
+//           Location endLocationWaypoint = new Location(LocationManager.GPS_PROVIDER);
+//           endLocationWaypoint.setLatitude(points.get(0).latitude);
+//           mLastLocation.bearingTo(endLocationWaypoint);
+
+
+
+            //Source
+            double lat1 = mLastLocation.getLatitude();
+            double lng1 = mLastLocation.getLongitude();
+
+
+            //Destination
+            double lat2 = points.get(0).latitude;
+            double lng2 = points.get(0).longitude;
+
+            //Bearing
+            double dLon = lng2-lng1;
+            double y = Math.sin(dLon) * Math.cos(lat2);
+            double x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+            double brng = Math.toDegrees((Math.atan2(y, x)));
+            brng = (360 - ((brng + 180) % 360));
+            bearing = (float) brng;
+
+            updateCameraToFollowUser();
+
+            if (points!=null) {
+                if ( !points.isEmpty()) {
+                    for (String child: crashChild){
+                        String[] array = child.split(",");
+                        LatLng latLng1 = new LatLng(Double.parseDouble(array[0]),Double.parseDouble(array[1]));
+                        if (PolyUtil.isLocationOnPath(latLng1, points, false,20)) {
+                            //TODO: re-route user
+                            polyline.remove();
+                            if (routes.size() >= 2) {
+                                drawRoute(routes, 1);
+                                break;
+                            } else {
+                                //TODO: Alert User that there are no alternative routes
+                            }
+                        }
+                    }
+
+                }
+            }
+
         }
         else {
 
@@ -283,26 +331,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 //mCurrLocationMarker = mMap.addMarker(markerOptions);
 
                 //move map camera and rotate
-                updateCameraBearing(location.getBearing());
+                //updateCameraBearing(location.getBearing());
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
             }
         }
-        if (points!=null) {
-            if ( !points.isEmpty()) {
-                if (PolyUtil.isLocationOnPath(latLng, points, true)) {
-                    //TODO: re-route user
-                }
-            }
-        }
+
     }
 
     public void updateCameraToFollowUser() {
+        //AnimateCamera
         LatLng latLng = new LatLng(mLastLocation.getLatitude(),
                 mLastLocation.getLongitude());
         tilt = 37f;
         zoom = 17.5f;
         CameraPosition cameraPosition = new CameraPosition(latLng,zoom,tilt,bearing);
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+        //Marker
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(latLng);
+        markerOptions.icon(BitmapDescriptorFactory
+                .fromBitmap(getBitmapFromVectorDrawable(this,R.drawable.ic_navigation_24dp)));
     }
 
     /**
@@ -442,12 +491,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-    public void drawRoute(List<List<HashMap<String, String>>> routes){
+    public void drawRoute(List<List<HashMap<String, String>>> routes,int i){
 
-        PolylineOptions lineOptions = null;
+        PolylineOptions lineOptions;
         MarkerOptions markerOptions = new MarkerOptions();
 
-        for (int i = 0; i < routes.size(); i++) {
+        //used to be a for there instead of iterating through routes choose a specific one!!
             points = new ArrayList();
             lineOptions = new PolylineOptions();
 
@@ -468,8 +517,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             lineOptions.color(Color.BLUE);
             lineOptions.geodesic(true);
 
-        }
-        mMap.addPolyline(lineOptions);
+
+        polyline = mMap.addPolyline(lineOptions);
     }
 
     public void drawTraffic (Map<String,Long> traffic) {
@@ -502,11 +551,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             lineOptions.addAll(points);
             lineOptions.width(12);
 
-            if (duration <= 1) {
+            if (duration <= 10) {
                 lineOptions.color(Color.GREEN);
-            } else if (duration <= 2){
+            } else if (duration <= 20){
                 lineOptions.color(Color.YELLOW);
-            } else if (duration <= 3){
+            } else if (duration <= 30){
                 lineOptions.color(Color.RED);
             }
 
@@ -540,6 +589,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .bearing(bearing)
                 .build();
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos));
+
     }
 
     public static Bitmap getBitmapFromVectorDrawable(Context context, int drawableId) {
