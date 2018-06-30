@@ -18,6 +18,46 @@ html, body {
   font-size: 100%;
 }
 
+.statbox {
+  margin-bottom: 2px;
+}
+
+.bar1 {
+  height: 25px;
+  background-color: green;
+  display: inline-block;
+}
+
+.bar2 {
+  margin: 3px;
+  height: 20px;
+  width: 70%;
+  background-color: rgb(194, 17, 17);
+  display: inline-block;
+}
+
+.bar3 {
+  margin: 3px;
+  height: 20px;
+  width: 50%;
+  background-color: rgb(194, 97, 17);
+  display: inline-block;
+}
+
+.bar4 {
+  margin: 3px;
+  height: 20px;
+  width: 20%;
+  background-color: rgb(40, 240, 13);
+  display: inline-block;
+}
+
+.tact {
+  left: 45%;
+  margin: 5px;
+  padding-bottom: 10px;
+}
+
 .pac-card {
   margin: 10px 10px 0 0;
   border-radius: 2px 0 0 2px;

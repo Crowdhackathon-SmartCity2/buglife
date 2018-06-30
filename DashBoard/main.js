@@ -18,7 +18,7 @@ function initMap() {
     var places = searchBox.getPlaces();
     var bounds = new google.maps.LatLngBounds();
 
-    var contentString = '<button class="markerRemove">X</button>';
+    var contentString = '<button class="markerRemove">X</button><input type="text" /><button>Done</button><br><p style="color: black">Leof. Andrea Siggrou</p>';
 
     var infowindow = new google.maps.InfoWindow({
         content: contentString
