@@ -1,4 +1,6 @@
 var map;
+var markerID = 0;
+var markerSelected = 0;
 var markers = [];
 
 var messagesRef = new Firebase("https://ne-7aac7.firebaseio.com/");
@@ -16,6 +18,12 @@ function initMap() {
     var places = searchBox.getPlaces();
     var bounds = new google.maps.LatLngBounds();
 
+    var contentString = '<button class="markerRemove">X</button>';
+
+    var infowindow = new google.maps.InfoWindow({
+        content: contentString
+    });
+
     google.maps.event.addListener(map, "click", function (event) {
 
         //lat and lng is available in e object
@@ -29,12 +37,14 @@ function initMap() {
             position: event.latLng,
             map: map
         });
-        markers.push(marker);
+        marker.set("id", markerID);
+        markers.push([marker, markerID]);
 
         marker.addListener('click', function () {
-            map.setZoom(8);
-            map.setCenter(marker.getPosition());
+            infowindow.open(map, marker);
+            markerSelected = marker.get("id");
         });
+        markerID++;
     });
 
     // Bias the SearchBox results towards current map's viewport.
@@ -78,3 +88,17 @@ function initMap() {
 function addWaypoint(waypoint, percentDisabled) {
     messagesRef.child("Waypoints").update({ [waypoint]: percentDisabled });
 }
+
+$(document).ready(function () {
+    $(document).on('click', '.markerRemove', function () {
+        //Delete the marker
+        markers.forEach(function (index) {
+            //search for the marker that we have last selected
+            if (index[1] == markerSelected) {
+                console.log("hello " + markers.indexOf(index));
+                markers[markers.indexOf(index)][0].setMap(null);
+                markers.splice(markers.indexOf(index), 1);
+            }
+        });
+    });
+});
