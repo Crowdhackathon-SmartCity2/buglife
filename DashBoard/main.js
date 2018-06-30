@@ -2,9 +2,13 @@ var map;
 var markerID = 0;
 var markerSelected = 0;
 var markers = [];
-var crashMarkers = [];
-
 var crashes = [];
+var crashMarkers = [];
+var roads = [];
+var roadMarkers = [];
+
+var roadMarkerContentString = '<button class="markerRemove">X</button><button class="send">Done</button><br><p style="color: black">Leof. Andrea Siggrou</p>';
+
 
 var messagesRef = new Firebase("https://ne-7aac7.firebaseio.com/");
 
@@ -21,10 +25,8 @@ function initMap() {
     var places = searchBox.getPlaces();
     var bounds = new google.maps.LatLngBounds();
 
-    var contentString = '<button class="markerRemove">X</button><button class="send">Done</button><br><p style="color: black">Leof. Andrea Siggrou</p>';
-
     var infowindow = new google.maps.InfoWindow({
-        content: contentString
+        content: roadMarkerContentString
     });
 
     google.maps.event.addListener(map, "click", function (event) {
@@ -86,23 +88,21 @@ function initMap() {
         var icon = {
             url: "./icons/crash.png",
             scaledSize: new google.maps.Size(25, 25), // scaled size
-            origin: new google.maps.Point(0,0), // origin
+            origin: new google.maps.Point(0, 0), // origin
             anchor: new google.maps.Point(0, 0) // anchor
         };
 
-        //drawCrashes();
         for (var i = 0; i < crashMarkers.length; i++) {
             crashMarkers[i].setMap(null);
-            console.log(crashMarkers);
         }
-        
+
         for (var propt in crashes) {
             var LatLng = crashes[propt].split(',');
             var v1 = parseFloat(LatLng[0]);
             var v2 = parseFloat(LatLng[1]);
             var nLatLng = new Object;
             nLatLng["lat"] = v1;
-            nLatLng["lng"] = v2;          
+            nLatLng["lng"] = v2;
             var marker = new google.maps.Marker({
                 position: nLatLng,
                 icon: icon,
@@ -113,7 +113,56 @@ function initMap() {
     }, function (errorObject) {
         console.log("The read failed: " + errorObject.code);
     });
-    
+
+    messagesRef.child("Waypoints").on("value", function (snapshot) {
+        roads = [];
+        roads = snapshot.val();
+
+        console.log(roads);
+
+        for (var i = 0; i < roadMarkers.length; i++) {
+            roadMarkers[i].setMap(null);
+        }
+
+        var latlngs = Object.keys(roads);
+
+        latlngs.forEach(element => {
+            LatLng = element.replace('a','.').replace('b',',').replace('a', '.').split(',')
+            var v1 = parseFloat(LatLng[0]);
+            var v2 = parseFloat(LatLng[1]);
+            var nLatLng = new Object;
+            nLatLng["lat"] = v1;
+            nLatLng["lng"] = v2;
+
+            var marker = new google.maps.Marker({
+                position: nLatLng,
+                map: map
+            });
+            roadMarkers.push(marker); 
+
+            var menuwindow = new google.maps.InfoWindow({
+                content: roadMarkerContentString
+            });
+        
+            google.maps.event.addListener(map, "click", function (event) {
+                var marker = new google.maps.Marker({
+                    position: event.latLng,
+                    map: map
+                });
+                marker.set("id", markerID);
+                markers.push([marker, markerID]);
+        
+                marker.addListener('click', function () {
+                    menuwindow.open(map, marker);
+                    markerSelected = marker.get("id");
+                });
+                markerID++;
+            });
+        });
+
+    }, function (errorObject) {
+        console.log("The read failed: " + errorObject.code);
+    });
 }
 
 function addWaypoint(waypoint, percentDisabled) {
@@ -126,8 +175,16 @@ $(document).ready(function () {
         markers.forEach(function (index) {
             //search for the marker that we have last selected
             if (index[1] == markerSelected) {
+                var waypointToRemove = markers[markers.indexOf(index)][0].getPosition();
+                var lat = waypointToRemove.lat();
+                var lng = waypointToRemove.lng();
+                var formatedLatLng = (lat + "").replace('.', 'a') + 'b' + (lng + "").replace('.', 'a');
+
                 markers[markers.indexOf(index)][0].setMap(null);
                 markers.splice(markers.indexOf(index), 1);
+
+                //delete the waypoint from the database
+                messagesRef.child("Waypoints").child(formatedLatLng).remove();
             }
         });
     });
