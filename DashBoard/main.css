@@ -35,6 +35,16 @@ html, body {
   width: 70%;
   background-color: rgb(194, 17, 17);
   display: inline-block;
+  animation-name: example;
+  animation-iteration-count: infinite;
+  animation-duration: 17s;
+}
+
+@keyframes example {
+  0%   {width: 70%;}
+  25%  {width: 75%;}
+  50%  {width: 60%;}
+  100% {width: 70%;}
 }
 
 .bar3 {
@@ -43,6 +53,16 @@ html, body {
   width: 50%;
   background-color: rgb(194, 97, 17);
   display: inline-block;
+  animation-name: example2;
+  animation-iteration-count: infinite;
+  animation-duration: 17s;
+}
+@keyframes example2 {
+  0%   {width: 50%;}
+  25%  {width: 55%;}
+  50%  {width: 60%;}
+  75%  {width: 55%;}
+  100% {width: 50%;}
 }
 
 .bar4 {
@@ -51,6 +71,48 @@ html, body {
   width: 20%;
   background-color: rgb(40, 240, 13);
   display: inline-block;
+  animation-name: example3;
+  animation-iteration-count: infinite;
+  animation-duration: 17s;
+}
+@keyframes example3 {
+  0%   {width: 20%;}
+  25%  {width: 10%;}
+  50%  {width: 15%;}
+  100% {width: 20%;}
+}
+
+.tbar1 {
+  height: 25px;
+  width: 90%;
+  background-color: green;
+  display: inline-block;
+  animation-name: example5;
+  animation-iteration-count: infinite;
+  animation-duration: 10s;
+}
+
+@keyframes example5 {
+  0%   {background-color: green;}
+  50%  {background-color: rgba(0, 0, 0, 0);}
+  100%  {background-color: green;}
+}
+
+.bar4 {
+  margin: 3px;
+  height: 20px;
+  width: 10%;
+  background-color: rgb(50, 161, 35);
+  display: inline-block;
+  animation-name: example4;
+  animation-iteration-count: infinite;
+  animation-duration: 17s;
+}
+@keyframes example4 {
+  0%   {width: 10%;background-color: rgb(72, 255, 0);}
+  25%  {width: 5%;background-color: rgba(82, 252, 4, 0.877);}
+  50%  {width: 7%;background-color: rgba(0, 0, 0, 0);}
+  100% {width: 10%;background-color: rgb(60, 255, 0);}
 }
 
 #eventbox {

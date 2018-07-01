@@ -9,7 +9,7 @@ var roadMarkers = [];
 
 var toggledTraffic = true
 
-var roadMarkerContentString = '<button class="markerRemove">X</button><button class="send">Done</button><br><p style="color: black">Leof. Andrea Siggrou</p>';
+var roadMarkerContentString = '<button class="markerRemove">X</button><button class="send">Done</button><input type="text" value="80%" style="width: 28px;"><br><p style="color: black">Leof. Andrea Siggrou</p>';
 
 
 var messagesRef = new Firebase("https://ne-7aac7.firebaseio.com/");
