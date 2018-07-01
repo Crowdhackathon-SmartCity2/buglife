@@ -7,6 +7,8 @@ var crashMarkers = [];
 var roads = [];
 var roadMarkers = [];
 
+var toggledTraffic = true
+
 var roadMarkerContentString = '<button class="markerRemove">X</button><button class="send">Done</button><br><p style="color: black">Leof. Andrea Siggrou</p>';
 
 
@@ -20,8 +22,15 @@ function initMap() {
         center: myLatlng
     });
 
-    var trafficLayer = new google.maps.TrafficLayer();
-    trafficLayer.setMap(map);
+    trafficLayer = new google.maps.TrafficLayer();
+    google.maps.event.addDomListener(document.getElementById('trafficToggle'), 'click', function (event){
+        if(trafficLayer.getMap() == null){
+            trafficLayer.setMap(map);
+        } else {
+            trafficLayer.setMap(null);             
+        }
+    });
+
 
     var input = document.getElementById('pac-input');
 
@@ -91,7 +100,7 @@ function initMap() {
 
         var icon = {
             url: "./icons/crash.png",
-            scaledSize: new google.maps.Size(25, 25), // scaled size
+            scaledSize: new google.maps.Size(45, 45), // scaled size
             origin: new google.maps.Point(0, 0), // origin
             anchor: new google.maps.Point(0, 0) // anchor
         };
@@ -118,53 +127,53 @@ function initMap() {
         console.log("The read failed: " + errorObject.code);
     });
 
-    messagesRef.child("Waypoints").on("value", function (snapshot) {
-        roads = [];
-        roads = snapshot.val();
+    // messagesRef.child("Waypoints").on("value", function (snapshot) {
+    //     roads = [];
+    //     roads = snapshot.val();
 
-        for (var i = 0; i < roadMarkers.length; i++) {
-            roadMarkers[i].setMap(null);
-        }
+    //     for (var i = 0; i < roadMarkers.length; i++) {
+    //         roadMarkers[i].setMap(null);
+    //     }
 
-        var latlngs = Object.keys(roads);
+    //     var latlngs = Object.keys(roads);
 
-        latlngs.forEach(element => {
-            LatLng = element.replace('a', '.').replace('b', ',').replace('a', '.').split(',')
-            var v1 = parseFloat(LatLng[0]);
-            var v2 = parseFloat(LatLng[1]);
-            var nLatLng = new Object;
-            nLatLng["lat"] = v1;
-            nLatLng["lng"] = v2;
+    //     latlngs.forEach(element => {
+    //         LatLng = element.replace('a', '.').replace('b', ',').replace('a', '.').split(',')
+    //         var v1 = parseFloat(LatLng[0]);
+    //         var v2 = parseFloat(LatLng[1]);
+    //         var nLatLng = new Object;
+    //         nLatLng["lat"] = v1;
+    //         nLatLng["lng"] = v2;
 
-            var marker = new google.maps.Marker({
-                position: nLatLng,
-                map: map
-            });
-            roadMarkers.push(marker);
+    //         var marker = new google.maps.Marker({
+    //             position: nLatLng,
+    //             map: map
+    //         });
+    //         roadMarkers.push(marker);
 
-            var menuwindow = new google.maps.InfoWindow({
-                content: roadMarkerContentString
-            });
+    //         var menuwindow = new google.maps.InfoWindow({
+    //             content: roadMarkerContentString
+    //         });
 
-            google.maps.event.addListener(map, "click", function (event) {
-                var marker = new google.maps.Marker({
-                    position: event.latLng,
-                    map: map
-                });
-                marker.set("id", markerID);
-                markers.push([marker, markerID]);
+    //         google.maps.event.addListener(map, "click", function (event) {
+    //             var marker = new google.maps.Marker({
+    //                 position: event.latLng,
+    //                 map: map
+    //             });
+    //             marker.set("id", markerID);
+    //             markers.push([marker, markerID]);
 
-                marker.addListener('click', function () {
-                    menuwindow.open(map, marker);
-                    markerSelected = marker.get("id");
-                });
-                markerID++;
-            });
-        });
+    //             marker.addListener('click', function () {
+    //                 menuwindow.open(map, marker);
+    //                 markerSelected = marker.get("id");
+    //             });
+    //             markerID++;
+    //         });
+    //     });
 
-    }, function (errorObject) {
-        console.log("The read failed: " + errorObject.code);
-    });
+    // }, function (errorObject) {
+    //     console.log("The read failed: " + errorObject.code);
+    // });
 }
 
 function addWaypoint(waypoint, percentDisabled) {
